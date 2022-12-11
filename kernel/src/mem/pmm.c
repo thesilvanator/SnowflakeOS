@@ -27,6 +27,19 @@ uint32_t mmap_find_free();
 uint32_t mmap_find_free_frame(uint32_t num);
 
 void init_pmm(mb2_t* boot) {
+    // display memory map after bootloader
+    mb2_tag_mmap_t* mm_tag = (mb2_tag_mmap_t*) mb2_find_tag(boot, MB2_TAG_MMAP);
+    mb2_mmap_entry_t* entry;
+    printk("Memory map after bootloader: ");
+    if (mm_tag) {
+        uint32_t mm_count = mm_tag->header.size / mm_tag->entry_size;
+        for (uint32_t i = 0; i < mm_count; i++) {
+            entry = &mm_tag->entries[i];
+            printk("  addr: 0x%08x - 0x%08x len: 0x%08x type: 0x%x", (uint32_t) entry->base_addr,
+                (uint32_t) (entry->base_addr + entry->length), (uint32_t) entry->length, entry->type);
+        }
+    }
+
     // Compute where the kernel & GRUB modules end in physical memory
     mb2_tag_t* tag = boot->tags;
 
@@ -81,8 +94,7 @@ void init_pmm(mb2_t* boot) {
 
     printk("memory stats: available: \x1B[32m%d MiB\x1B[0m", available >> 20);
     printk("unavailable: \x1B[32m%d KiB\x1B[0m", unavailable >> 10);
-    printk("taken by modules: \x1B[32m%d MiB\x1B[0m",
-        (kernel_end - (uintptr_t) &KERNEL_END_PHYS) >> 20);
+    printk("taken by modules: \x1B[32m%d MiB\x1B[0m", (kernel_end - (uintptr_t) &KERNEL_END_PHYS) >> 20);
 }
 
 /* Returns the number of bytes allocated by the PMM.
@@ -100,7 +112,7 @@ uint32_t pmm_total_memory() {
 /* Mark an area of physical memory as available.
  */
 void pmm_init_region(uintptr_t addr, uint32_t size) {
-    uint32_t base_block = addr/PMM_BLOCK_SIZE;
+    uint32_t base_block = addr / PMM_BLOCK_SIZE;
     /* A region might be smaller than a block, yet span two: boundaries */
     uint32_t num = divide_up(size + addr % PMM_BLOCK_SIZE, PMM_BLOCK_SIZE);
 
@@ -115,7 +127,7 @@ void pmm_init_region(uintptr_t addr, uint32_t size) {
 /* Mark an area of physical memory as used.
  */
 void pmm_deinit_region(uintptr_t addr, uint32_t size) {
-    uint32_t base_block = addr/PMM_BLOCK_SIZE;
+    uint32_t base_block = addr / PMM_BLOCK_SIZE;
     uint32_t num = divide_up(size + addr % PMM_BLOCK_SIZE, PMM_BLOCK_SIZE);
 
     while (num-- > 0) {
@@ -134,13 +146,13 @@ uintptr_t pmm_alloc_page() {
 
     uint32_t block = mmap_find_free();
 
-    if (!block)  {
+    if (!block) {
         return 0;
     }
 
     mmap_set(block);
 
-    return (uintptr_t) (block*PMM_BLOCK_SIZE);
+    return (uintptr_t) (block * PMM_BLOCK_SIZE);
 }
 
 /* Returns the address of a 4 MiB area of physical memory, aligned to 4 MiB.
@@ -149,12 +161,12 @@ uintptr_t pmm_alloc_page() {
  * Find an 8 MiB section of memory. In there, we are guaranteed to find an
  * address that is 4 MiB-aligned. Return that, mark 4 MiB as taken.
  */
-uintptr_t pmm_alloc_aligned_large_page() { // TODO: generalize
-    if (max_blocks - used_blocks < 2*1024) { // 4MiB
+uintptr_t pmm_alloc_aligned_large_page() {     // TODO: generalize
+    if (max_blocks - used_blocks < 2 * 1024) { // 4MiB
         return 0;
     }
 
-    uint32_t free_block = mmap_find_free_frame(2*1024);
+    uint32_t free_block = mmap_find_free_frame(2 * 1024);
 
     if (!free_block) {
         return 0;
@@ -166,11 +178,11 @@ uintptr_t pmm_alloc_aligned_large_page() { // TODO: generalize
         mmap_set(aligned_block + i);
     }
 
-    return (uintptr_t)(aligned_block*PMM_BLOCK_SIZE);
+    return (uintptr_t) (aligned_block * PMM_BLOCK_SIZE);
 }
 
 uintptr_t pmm_alloc_pages(uint32_t num) {
-    if (max_blocks-used_blocks < num) {
+    if (max_blocks - used_blocks < num) {
         return 0;
     }
 
@@ -181,22 +193,22 @@ uintptr_t pmm_alloc_pages(uint32_t num) {
     }
 
     for (uint32_t i = 0; i < num; i++) {
-        mmap_set(first_block+i);
+        mmap_set(first_block + i);
     }
 
-    return (uintptr_t) (first_block*PMM_BLOCK_SIZE);
+    return (uintptr_t) (first_block * PMM_BLOCK_SIZE);
 }
 
 void pmm_free_page(uintptr_t addr) {
-    uint32_t block = addr/PMM_BLOCK_SIZE;
+    uint32_t block = addr / PMM_BLOCK_SIZE;
     mmap_unset(block);
 }
 
 void pmm_free_pages(uintptr_t addr, uint32_t num) {
-    uint32_t first_block = addr/PMM_BLOCK_SIZE;
+    uint32_t first_block = addr / PMM_BLOCK_SIZE;
 
     for (uint32_t i = 0; i < num; i++) {
-        mmap_unset(first_block+i);
+        mmap_unset(first_block + i);
     }
 }
 
@@ -217,7 +229,7 @@ uint32_t mmap_test(uint32_t bit) {
 /* Returns the index of the first free bit in the bitmap
  */
 uint32_t mmap_find_free() {
-    for (uint32_t i = 0; i < max_blocks/32; i++) {
+    for (uint32_t i = 0; i < max_blocks / 32; i++) {
         if (bitmap[i] != 0xFFFFFFFF) {
             for (uint32_t j = 0; j < 32; j++) {
                 if (!(bitmap[i] & NTHBIT(j))) {
@@ -236,12 +248,12 @@ uint32_t mmap_find_free_frame(uint32_t frame_size) {
     uint32_t first = 0;
     uint32_t count = 0;
 
-    for (uint32_t i = 0; i < max_blocks/32; i++) {
+    for (uint32_t i = 0; i < max_blocks / 32; i++) {
         if (bitmap[i] != 0xFFFFFFFF) {
             for (uint32_t j = 0; j < 32; j++) {
                 if (!(bitmap[i] & NTHBIT(j))) {
                     if (!first) {
-                        first = i*32+j;
+                        first = i * 32 + j;
                     }
 
                     count++;

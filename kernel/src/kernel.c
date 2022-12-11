@@ -1,3 +1,4 @@
+#include <kernel/ahci.h>
 #include <kernel/ext2.h>
 #include <kernel/fb.h>
 #include <kernel/fpu.h>
@@ -8,7 +9,6 @@
 #include <kernel/multiboot2.h>
 #include <kernel/paging.h>
 #include <kernel/pci.h>
-#include <kernel/ahci.h>
 #include <kernel/pmm.h>
 #include <kernel/proc.h>
 #include <kernel/ps2.h>
@@ -60,7 +60,6 @@ void kernel_main(mb2_t* boot, uint32_t magic) {
 
     // Load GRUB modules as programs
     mb2_tag_t* tag = boot->tags;
-
     while (tag->type != MB2_TAG_END) {
         if (tag->type == MB2_TAG_MODULE) {
             mb2_tag_module_t* mod = (mb2_tag_module_t*) tag;
