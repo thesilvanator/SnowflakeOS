@@ -1,7 +1,5 @@
 #pragma once
 
-#include <kernel/acpi.h>
-
 #include <stdint.h>
 
 #define MB2_MAGIC 0x36D76289
@@ -17,11 +15,21 @@
 #define MB2_TAG_RSDP2 15
 
 #define MB2_MMAP_AVAIL 1
+#define MB2_MMAP_ACPI 3
 
 typedef struct mb2_tag_t {
     uint32_t type;
     uint32_t size;
 } __attribute__((packed)) mb2_tag_t;
+
+typedef struct mb2_t {
+    uint32_t total_size;
+    uint32_t reserved;
+    /* Not an array: just points to the first tag */
+    mb2_tag_t tags[];
+} __attribute__((packed)) mb2_t;
+
+#include <kernel/acpi.h>
 
 typedef struct mb2_tag_mem_t {
     mb2_tag_t header;
@@ -92,20 +100,13 @@ typedef struct mb2_tag_fb_t {
 
 typedef struct mb2_tag_rsdp1_t {
     mb2_tag_t header;
-    acpi_rsdp1_t rsdp;
+    acpi_rsdp_t rsdp;
 } __attribute__((packed)) mb2_tag_rsdp1_t;
 
 typedef struct mb2_tag_rsdp2_t {
     mb2_tag_t header;
-    acpi_rsdp2_t rsdp;
+    acpi_rsdp_t rsdp;
 } __attribute__((packed)) mb2_tag_rsdp2_t;
-
-typedef struct mb2_t {
-    uint32_t total_size;
-    uint32_t reserved;
-    /* Not an array: just points to the first tag */
-    mb2_tag_t tags[];
-} __attribute__((packed)) mb2_t;
 
 void mb2_print_tags(mb2_t* boot);
 mb2_tag_t* mb2_find_tag(mb2_t* boot, uint32_t tag_type);

@@ -1,9 +1,11 @@
+#include <kernel/acpi.h>
 #include <kernel/multiboot2.h>
 #include <kernel/paging.h>
 #include <kernel/pmm.h>
 #include <kernel/sys.h>
 
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +32,7 @@ void init_pmm(mb2_t* boot) {
     // display memory map after bootloader
     mb2_tag_mmap_t* mm_tag = (mb2_tag_mmap_t*) mb2_find_tag(boot, MB2_TAG_MMAP);
     mb2_mmap_entry_t* entry;
-    printk("Memory map after bootloader: ");
+    printk("BIOS provided memory map: ");
     if (mm_tag) {
         uint32_t mm_count = mm_tag->header.size / mm_tag->entry_size;
         for (uint32_t i = 0; i < mm_count; i++) {
@@ -78,6 +80,12 @@ void init_pmm(mb2_t* boot) {
             pmm_init_region((uintptr_t) ent->base_addr, ent->length);
             available += ent->length;
         } else {
+            if (ent->type == MB2_MMAP_ACPI) {
+                printk("Found acpi tables location: 0x%.8x", ent->base_addr);
+                acpi_info_t* acpi_info = get_acpi_info();
+                acpi_info->phys_base = (uint32_t) ent->base_addr;
+                acpi_info->region_size = (uint32_t) ent->length;
+            }
             unavailable += ent->length;
         }
 

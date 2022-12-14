@@ -1,3 +1,4 @@
+#include <kernel/acpi.h>
 #include <kernel/ahci.h>
 #include <kernel/ext2.h>
 #include <kernel/fb.h>
@@ -41,6 +42,8 @@ void kernel_main(mb2_t* boot, uint32_t magic) {
     init_pmm(boot);
     init_paging(boot);
 
+    init_acpi(boot);
+
     printk("SnowflakeOS 0.7");
     printk("kernel is %d KiB large", ((uint32_t) &KERNEL_SIZE) >> 10);
 
@@ -79,6 +82,14 @@ void kernel_main(mb2_t* boot, uint32_t magic) {
         }
 
         tag = (mb2_tag_t*) ((uintptr_t) tag + align_to(tag->size, 8));
+    }
+
+    // test getting acpi dmar table
+    acpi_table_hdr_t* dmar = acpi_get_table(ACPI_DMAR_TABLE);
+    if (dmar) {
+        printk("dmar is available: %.4s oem is %.6s", dmar->signature, dmar->oem_id);
+    } else {
+        printk("dmar table unavailable");
     }
 
     init_wm();

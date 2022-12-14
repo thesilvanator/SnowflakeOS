@@ -60,7 +60,7 @@ ASSETS_OTHER:=$(ASSETS_OTHER:%=$(TARGETROOT)/%)
 DISKIMAGE=$(ISODIR)/modules/disk.img
 GRUBCFG=$(ISODIR)/boot/grub/grub.cfg
 
-.PHONY: all build qemu bochs clean toolchain assets
+.PHONY: all build qemu qemu-uefi bochs clean toolchain assets
 
 all: build SnowflakeOS.iso
 
@@ -88,6 +88,21 @@ qemu: SnowflakeOS.iso
 			   -device ide-hd,drive=test,bus=ahci.1,model=TESTDRIVE,serial=6969696969696 \
 			   -monitor stdio \
 			   -s -no-reboot -no-shutdown -serial file:serial.log
+	cat serial.log
+
+qemu-uefi: SnowflakeOS.iso
+	qemu-system-x86_64  \
+			   -display gtk \
+			   -machine q35 \
+			   -device intel-iommu \
+	                   -drive file=SnowflakeOS.iso,id=disk,if=none \
+	                   -drive file=drive.img,id=test,if=none \
+			   -device ahci,id=ahci \
+			   -device ide-hd,drive=disk,bus=ahci.0,model=HOSTDEVICE,serial=10101010101 \
+			   -device ide-hd,drive=test,bus=ahci.1,model=TESTDRIVE,serial=6969696969696 \
+			   -monitor stdio \
+			   -s -no-reboot -no-shutdown -serial file:serial.log \
+			   -bios /usr/share/ovmf/x64/OVMF.fd
 	cat serial.log
 
 bochs: SnowflakeOS.iso
