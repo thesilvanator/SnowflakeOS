@@ -28,7 +28,6 @@ acpi_info_t acpi_info = {0};
 
 acpi_table_t acpi_tables[] = {
     [ACPI_DMAR_TABLE] = {"DMAR", NULL},
-    [ACPI_FACP_TABLE] = {"FACP", NULL},
 };
 
 acpi_info_t* get_acpi_info(void) {
@@ -172,7 +171,7 @@ void acpi_query_tables(void) {
     uint32_t num_tables;
     uintptr_t tables;
     uint32_t offset;
-    acpi_table_hdr_t* rsdt = ACPI_ADDR_P2V(acpi_info.rsdt);
+    acpi_rsdt_t* rsdt = ACPI_ADDR_P2V(acpi_info.rsdt);
 
     if (acpi_info.type == ACPI_VER1)
         offset = 4;
@@ -181,8 +180,8 @@ void acpi_query_tables(void) {
     else
         return;
 
-    tables = (uintptr_t) rsdt->data;
-    num_tables = (rsdt->length - sizeof(acpi_table_hdr_t)) / offset;
+    tables = (uintptr_t) rsdt->ptrs;
+    num_tables = (rsdt->hdr.length - sizeof(acpi_table_hdr_t)) / offset;
 
     printk("available acpi tables: ");
     for (uint32_t i = 0; i < num_tables; i++) {
@@ -238,9 +237,9 @@ static bool validate_rsdp(void) {
 
     // set our rsdt
     if (acpi_info.type == ACPI_VER1)
-        acpi_info.rsdt = (acpi_table_hdr_t*) acpi_info.rsdp->rsdt_addr;
+        acpi_info.rsdt = (acpi_rsdt_t*) acpi_info.rsdp->rsdt_addr;
     if (acpi_info.type == ACPI_EXTD)
-        acpi_info.rsdt = (acpi_table_hdr_t*) (uint32_t) acpi_info.rsdp->xsdt_addr;
+        acpi_info.rsdt = (acpi_rsdt_t*) (uint32_t) acpi_info.rsdp->xsdt_addr;
 
     printk("type: 0x%x", acpi_info.type);
     printk("OEM ID: %.6s", acpi_info.rsdp->oem_id);
@@ -250,7 +249,7 @@ static bool validate_rsdp(void) {
 }
 
 static bool validate_rsdt(void) {
-    bool ret = validate_table_hdr(ACPI_ADDR_P2V(acpi_info.rsdt));
+    bool ret = validate_table_hdr(&ACPI_ADDR_P2V(acpi_info.rsdt)->hdr);
     if (!ret)
         printke("error validating rdst");
 

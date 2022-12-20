@@ -42,8 +42,12 @@ typedef struct acpi_table_hdr_t {
     uint32_t oem_rev;
     uint32_t creator_id;
     uint32_t creator_rev;
-    uint8_t data[];
 } __attribute__((packed)) acpi_table_hdr_t;
+
+typedef struct acpi_rsdt_t {
+    acpi_table_hdr_t hdr;
+    uint8_t ptrs[];
+} __attribute__((packed)) acpi_rsdt_t;
 
 /*
  * This holds information regarding ACPI, its made so that the rsdp and rsdt
@@ -52,7 +56,7 @@ typedef struct acpi_table_hdr_t {
 typedef struct acpi_info_t {
     ACPI_Version type;
     acpi_rsdp_t* rsdp;
-    acpi_table_hdr_t* rsdt;
+    acpi_rsdt_t* rsdt;
     uintptr_t phys_base;
     uintptr_t virt_base;
     uint32_t region_size; // size of mem region the firmware allocates for acpi
