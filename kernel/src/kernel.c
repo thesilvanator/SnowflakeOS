@@ -6,6 +6,7 @@
 #include <kernel/fs.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
+#include <kernel/iommu.h>
 #include <kernel/irq.h>
 #include <kernel/multiboot2.h>
 #include <kernel/paging.h>
@@ -84,13 +85,7 @@ void kernel_main(mb2_t* boot, uint32_t magic) {
         tag = (mb2_tag_t*) ((uintptr_t) tag + align_to(tag->size, 8));
     }
 
-    // test getting acpi dmar table
-    acpi_table_hdr_t* dmar = acpi_get_table(ACPI_DMAR_TABLE);
-    if (dmar) {
-        printk("dmar is available: %.4s oem is %.6s", dmar->signature, dmar->oem_id);
-    } else {
-        printk("dmar table unavailable");
-    }
+    init_iommu();
 
     init_wm();
     init_proc();
