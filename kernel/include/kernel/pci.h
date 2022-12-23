@@ -89,4 +89,6 @@ uint32_t pci_read_config_long(uint8_t bus, uint8_t dev, uint8_t func, uint8_t of
 void pci_write_config_word(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint16_t data);
 void pci_write_config_long(uint8_t bus, uint8_t dev, uint8_t func, uint8_t offset, uint32_t data);
 void pci_print_device(pci_device_t* dev);
+void pci_print_device_short(pci_device_t* dev);
 void pci_print_all_devices();
+pci_device_t* pci_find_device(uint32_t bus, uint32_t dev, uint32_t func);

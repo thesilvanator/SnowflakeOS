@@ -6,7 +6,7 @@
 
 #define UNUSED(param) (void) param
 #define PHYS_TO_VIRT(addr) ((addr) + KERNEL_BASE_VIRT)
-#define VIRT_TO_PHYS(addr) ((addr) - KERNEL_BASE_VIRT)
+#define VIRT_TO_PHYS(addr) ((addr) -KERNEL_BASE_VIRT)
 
 #define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
@@ -19,6 +19,12 @@
     do { \
         asm("xchgw %bx, %bx\n"); \
     } while (false)
+
+#define SPIN() \
+    printke("spining..."); \
+    do { \
+        BREAK(); \
+    } while (1);
 
 /* Returns the next multiple of `align` greater than `n`, or `n` if it is a
  * multiple of `align`.

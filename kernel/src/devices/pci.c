@@ -99,11 +99,25 @@ void pci_print_device(pci_device_t* dev) {
     }
 }
 
+void pci_print_device_short(pci_device_t* dev) {
+    printk("dev id: %d, location: %x:%x:%x", dev->id, dev->bus, dev->dev, dev->func);
+}
+
 void pci_print_all_devices() {
     pci_device_t* dev;
     list_for_each_entry(dev, &pci_devices) {
         pci_print_device(dev);
     }
+}
+
+pci_device_t* pci_find_device(uint32_t bus, uint32_t dev, uint32_t func) {
+    pci_device_t* d;
+    list_for_each_entry(d, &pci_devices) {
+        if (d->bus == bus && d->dev == dev && d->func == func)
+            return d;
+    }
+
+    return NULL;
 }
 
 pci_device_t* pci_register_device(uint32_t bus, uint32_t dev, uint32_t func) {

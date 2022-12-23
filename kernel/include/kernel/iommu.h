@@ -1,8 +1,20 @@
 #pragma once
 #include <kernel/acpi.h>
 
+#include <list.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+#define IOMMU_MAX_DRHD_UNITS 256
+#define DMAR_INCLUDE_PCI_ALL 0x1
+
+#define DMAR_DRHD_RTAR_OFFSET 0x20
+
+typedef enum DMAR_DRHD_REG_OFFSET {
+    DRHD_GCMD_REG = 0x18,
+    DRHD_GSTS_REG = 0x1C,
+    DRHD_RTADDR_REG = 0x20,
+} DMAR_DRHD_REG_OFFSET;
 
 typedef enum ACPI_DMAR_Remapping_Type {
     IOMMU_DRHD = 0,
@@ -64,5 +76,18 @@ typedef struct acpi_dmar_dev_scope_entry_t {
     uint8_t start_bus_num;
     uint8_t path[];
 } __attribute__((packed)) acpi_dmar_dev_scope_entry_t;
+
+typedef struct intel_iommu_t {
+    acpi_dmar_table_t* dmar;
+    list_t drhd_units;
+} intel_iommu_t;
+
+typedef struct dmar_drhd_unit_t {
+    uint32_t id;
+    acpi_dmar_drhd_t* acpi_struct;
+    volatile void* reg_base_addr_virt;
+    list_t pci_devs;
+    uint32_t dev_count;
+} dmar_drhd_unit_t;
 
 bool init_iommu(void);
